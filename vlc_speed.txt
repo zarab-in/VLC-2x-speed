@@ -1,0 +1,43 @@
+#HotIf WinActive("ahk_class Qt5156QWindowIcon") || WinActive("ahk_exe vlc.exe")
+$Space:: {
+    ; Check if you are holding down Spacebar for more than 0.25 seconds
+    if (KeyWait("Space", "T 0.25") = 0) {
+        
+        ; 1. Grab VLC's window title (which includes the current speed format "[1.40x]")
+        vlcTitle := WinGetTitle("A")
+        
+        ; 2. Extract the current custom speed using Regex
+        currentSpeed := 1.00 ; Fallback default
+        if RegExMatch(vlcTitle, "\[(\d+\.\d+)x\]", &match) {
+            currentSpeed := Float(match[1])
+        }
+        
+        ; 3. Calculate how many steps (each step = 0.10x) it takes to reach 2.00x
+        if (currentSpeed < 2.00) {
+            stepsToDouble := Round((2.00 - currentSpeed) / 0.10)
+            
+            ; Build a string of ']' characters to send
+            bracketsTo2x := ""
+            Loop stepsToDouble
+                bracketsTo2x .= "]"
+            
+            Send(bracketsTo2x) ; Instant jump to 2.00x
+        }
+        
+        ; 4. Hold the speed right here until you physically release Spacebar
+        KeyWait("Space") 
+        
+        ; 5. Calculate and send the exact number of '[' keys to perfectly snap back to your custom speed
+        if (currentSpeed < 2.00) {
+            bracketsToBack := ""
+            Loop stepsToDouble
+                bracketsToBack .= "["
+                
+            Send(bracketsToBack)
+        }
+    } else {
+        ; If you just tapped the spacebar quickly, pass a normal Space stroke to play/pause
+        Send("{Space}")
+    }
+}
+#HotIf
